@@ -3,6 +3,11 @@ import {
   Box,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   FormHelperText,
   Grid,
@@ -12,6 +17,7 @@ import {
   TextField
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -25,6 +31,10 @@ import { CustomerType, SubProductStatus } from '../../types';
 const AccountForm = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // State for success dialog
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [createdAccountNo, setCreatedAccountNo] = useState<string | null>(null);
 
   // Form setup with react-hook-form
   const { 
@@ -68,8 +78,15 @@ const AccountForm = () => {
     mutationFn: createCustomerAccount,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['customerAccounts'] });
-      toast.success('Account created successfully');
-      navigate(`/accounts/${data.accountNo}`);
+      
+      // Show dialog with account number instead of toast
+      if (data.message) {
+        setCreatedAccountNo(data.message);
+        setSuccessDialogOpen(true);
+      } else {
+        toast.success('Account created successfully');
+        navigate(`/accounts/${data.accountNo}`);
+      }
     },
     onError: (error: Error) => {
       toast.error(`Failed to create account: ${error.message}`);
@@ -99,6 +116,12 @@ const AccountForm = () => {
     }
   };
 
+  // Handle dialog close
+  const handleCloseSuccessDialog = () => {
+    setSuccessDialogOpen(false);
+    navigate(`/accounts`);
+  };
+
   return (
     <Box>
       <PageHeader
@@ -107,10 +130,43 @@ const AccountForm = () => {
         buttonLink="/accounts"
         startIcon={<ArrowBackIcon />}
       />
+      
+      {/* Success Dialog */}
+      <Dialog
+        open={successDialogOpen}
+        onClose={handleCloseSuccessDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Account Created</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {createdAccountNo}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseSuccessDialog} color="primary" autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <FormSection title="Account Information">
           <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              {/* Account Number field - disabled in create mode */}
+              <TextField
+                label="Account Number"
+                value="Will be generated"
+                fullWidth
+                disabled={true}
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+            
             <Grid item xs={12} md={6}>
               <Controller
                 name="custId"
@@ -239,26 +295,38 @@ const AccountForm = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
-              <Controller
-                name="makerId"
-                control={control}
-                rules={{
-                  required: 'Maker ID is mandatory'
-                }}
-                render={({ field }) => (
-                  <TextField
-                    {...field}
-                    label="Maker ID"
-                    fullWidth
-                    required
-                    error={!!errors.makerId}
-                    helperText={errors.makerId?.message}
-                    disabled={isLoading}
-                  />
-                )}
-              />
-            </Grid>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="makerId"
+                  control={control}
+                  rules={{
+                    required: 'Maker ID is mandatory'
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Maker ID"
+                      fullWidth
+                      required
+                      error={!!errors.makerId}
+                      helperText={errors.makerId?.message}
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Branch Code"
+                  value="001"
+                  fullWidth
+                  disabled={true}
+                  InputProps={{
+                    readOnly: true,
+                  }}
+                />
+              </Grid>
           </Grid>
         </FormSection>
 

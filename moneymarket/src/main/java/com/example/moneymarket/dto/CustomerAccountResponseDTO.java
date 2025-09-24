@@ -30,4 +30,7 @@ public class CustomerAccountResponseDTO {
     private AccountStatus accountStatus;
     private BigDecimal currentBalance;
     private BigDecimal availableBalance;
+    
+    // Message for UI display (e.g., confirmation messages)
+    private String message;
 }

@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mockito.Spy;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -30,6 +31,9 @@ class CustomerServiceTest {
 
     @Mock
     private CustMasterRepository custMasterRepository;
+    
+    @Mock
+    private CustomerIdService customerIdService;
 
     @InjectMocks
     private CustomerService customerService;
@@ -70,6 +74,7 @@ class CustomerServiceTest {
     void createCustomer_Success() {
         // Arrange
         when(custMasterRepository.existsByExtCustId(customerRequestDTO.getExtCustId())).thenReturn(false);
+        when(customerIdService.generateCustomerId(customerRequestDTO.getCustType())).thenReturn(1);
         when(custMasterRepository.save(any(CustMaster.class))).thenReturn(customerEntity);
 
         // Act

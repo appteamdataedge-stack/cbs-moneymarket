@@ -35,6 +35,7 @@ public class SubProductService {
     private final ProdMasterRepository prodMasterRepository;
     private final GLBalanceRepository glBalanceRepository;
     private final GLNumberService glNumberService;
+    private final GLValidationService glValidationService;
 
     /**
      * Create a new sub-product
@@ -56,8 +57,23 @@ public class SubProductService {
         // Validate GL Number exists and is at layer 4
         try {
             glNumberService.validateGLNumber(subProductRequestDTO.getCumGLNum(), product.getCumGLNum(), 4);
+            
+            // Create a temporary entity for validation
+            SubProdMaster tempSubProduct = mapToEntity(subProductRequestDTO, product);
+            
+            // Additional validation for GL mapping
+            glValidationService.validateSubProductGLMapping(tempSubProduct, product);
         } catch (BusinessException e) {
             throw new BusinessException("Invalid GL Number: " + e.getMessage());
+        }
+        
+        // Validate Interest Code and External GL Num
+        if (subProductRequestDTO.getInttCode() == null || subProductRequestDTO.getInttCode().trim().isEmpty()) {
+            throw new BusinessException("Interest Code is required for Sub-Product");
+        }
+        
+        if (subProductRequestDTO.getExtGLNum() == null || subProductRequestDTO.getExtGLNum().trim().isEmpty()) {
+            throw new BusinessException("External GL Number is required for Sub-Product");
         }
 
         // Map DTO to entity
@@ -101,6 +117,13 @@ public class SubProductService {
         // Validate GL Number exists and is at layer 4
         try {
             glNumberService.validateGLNumber(subProductRequestDTO.getCumGLNum(), product.getCumGLNum(), 4);
+            
+            // Create a temporary entity for validation
+            SubProdMaster tempSubProduct = new SubProdMaster();
+            tempSubProduct.setCumGLNum(subProductRequestDTO.getCumGLNum());
+            
+            // Additional validation for GL mapping
+            glValidationService.validateSubProductGLMapping(tempSubProduct, product);
         } catch (BusinessException e) {
             throw new BusinessException("Invalid GL Number: " + e.getMessage());
         }

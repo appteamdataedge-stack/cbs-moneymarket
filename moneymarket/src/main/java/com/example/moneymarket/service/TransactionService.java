@@ -86,6 +86,8 @@ public class TransactionService {
                     .fcyAmt(lineDTO.getFcyAmt())
                     .exchangeRate(lineDTO.getExchangeRate())
                     .lcyAmt(lineDTO.getLcyAmt())
+                    .debitAmount(lineDTO.getDrCrFlag() == DrCrFlag.D ? lineDTO.getLcyAmt() : BigDecimal.ZERO)
+                    .creditAmount(lineDTO.getDrCrFlag() == DrCrFlag.C ? lineDTO.getLcyAmt() : BigDecimal.ZERO)
                     .narration(transactionRequestDTO.getNarration())
                     .udf1(lineDTO.getUdf1())
                     .build();

@@ -1,7 +1,7 @@
-import { Add as AddIcon, Edit as EditIcon, Verified as VerifiedIcon } from '@mui/icons-material';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Add as AddIcon, Edit as EditIcon, Verified as VerifiedIcon, Search as SearchIcon } from '@mui/icons-material';
+import { Box, IconButton, Tooltip, TextField, InputAdornment, Button, Grid, Paper } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getAllCustomers, verifyCustomer } from '../../api/customerService';
@@ -14,6 +14,7 @@ const CustomerList = () => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [sort, setSort] = useState<string | undefined>(undefined);
+  const [searchTerm, setSearchTerm] = useState('');
   const [verificationModal, setVerificationModal] = useState<{
     open: boolean;
     customerId: number | null;
@@ -22,11 +23,52 @@ const CustomerList = () => {
     customerId: null,
   });
 
-  // Fetch customers
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['customers', { page, size: rowsPerPage, sort }],
-    queryFn: () => getAllCustomers(page, rowsPerPage, sort),
+  // Fetch all customers at once
+  const { data: allCustomers, isLoading, error, refetch } = useQuery({
+    queryKey: ['all-customers'],
+    queryFn: () => getAllCustomers(0, 1000), // Get a large number to effectively get all
   });
+  
+  // Filter customers based on search term
+  const filteredCustomers = useMemo(() => {
+    if (!allCustomers?.content || searchTerm.trim() === '') {
+      return allCustomers?.content || [];
+    }
+    
+    const lowerCaseSearch = searchTerm.toLowerCase();
+    
+    return allCustomers.content.filter((customer) => {
+      // Get the customer name based on type
+      const customerName = customer.custType === CustomerType.INDIVIDUAL
+        ? `${customer.firstName || ''} ${customer.lastName || ''}`.trim()
+        : customer.tradeName || '';
+      
+      // Search in various fields
+      return (
+        customerName.toLowerCase().includes(lowerCaseSearch) || 
+        customer.extCustId.toLowerCase().includes(lowerCaseSearch) ||
+        String(customer.custId).includes(lowerCaseSearch) ||
+        (customer.mobile && customer.mobile.toLowerCase().includes(lowerCaseSearch))
+      );
+    });
+  }, [allCustomers, searchTerm]);
+  
+  // Paginated data for the table
+  const paginatedData = useMemo(() => {
+    const startIndex = page * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    return filteredCustomers.slice(startIndex, endIndex);
+  }, [filteredCustomers, page, rowsPerPage]);
+  
+  // Reset to first page when search changes
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm]);
+  
+  // Handle search input change - dynamic search as user types
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  };
 
   // Handle sort
   const handleSort = (field: string, direction: 'asc' | 'desc') => {
@@ -132,6 +174,39 @@ const CustomerList = () => {
         startIcon={<AddIcon />}
       />
 
+      {/* Search Panel - Right aligned */}
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 3 }}>
+        <TextField
+          value={searchTerm}
+          onChange={handleSearchInputChange}
+          placeholder="Search customers..."
+          variant="outlined"
+          size="small"
+          sx={{ width: '300px' }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon color="action" />
+              </InputAdornment>
+            ),
+            endAdornment: searchTerm && (
+              <InputAdornment position="end">
+                <IconButton 
+                  aria-label="clear search"
+                  onClick={() => setSearchTerm('')}
+                  edge="end"
+                  size="small"
+                >
+                  <Tooltip title="Clear search">
+                    <Box component="span" sx={{ display: 'flex' }}>×</Box>
+                  </Tooltip>
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+        />
+      </Box>
+
       {error ? (
         <ErrorDisplay 
           error={error} 
@@ -141,8 +216,8 @@ const CustomerList = () => {
       ) : (
         <DataTable
           columns={columns}
-          rows={data?.content || []}
-          totalItems={data?.totalElements || 0}
+          rows={paginatedData}
+          totalItems={filteredCustomers.length}
           page={page}
           rowsPerPage={rowsPerPage}
           onPageChange={setPage}

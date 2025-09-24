@@ -1,5 +1,5 @@
 import { Add as AddIcon, Visibility as ViewIcon, Close as CloseIcon } from '@mui/icons-material';
-import { Box, IconButton, Tooltip, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
+import { Box, IconButton, Tooltip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -29,11 +29,13 @@ const AccountList = () => {
     queryKey: ['customerAccounts', { page, size: rowsPerPage, sort }],
     queryFn: () => getAllCustomerAccounts(page, rowsPerPage, sort),
     retry: 3,
-    retryDelay: 1000,
-    onError: (err) => {
-      console.error('Error fetching customer accounts:', err);
-    }
+    retryDelay: 1000
   });
+  
+  // Handle error if needed
+  if (error) {
+    console.error('Error fetching customer accounts:', error);
+  }
 
   // Close account mutation
   const closeAccountMutation = useMutation({

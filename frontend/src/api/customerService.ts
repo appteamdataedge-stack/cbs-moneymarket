@@ -9,10 +9,13 @@ const CUSTOMERS_ENDPOINT = '/customers';
 /**
  * Get all customers with pagination
  */
-export const getAllCustomers = async (page = 0, size = 10, sort?: string): Promise<Page<CustomerResponseDTO>> => {
+export const getAllCustomers = async (page = 0, size = 10, sort?: string, search?: string): Promise<Page<CustomerResponseDTO>> => {
   let url = `${CUSTOMERS_ENDPOINT}?page=${page}&size=${size}`;
   if (sort) {
     url += `&sort=${sort}`;
+  }
+  if (search) {
+    url += `&search=${encodeURIComponent(search)}`;
   }
   
   return apiRequest<Page<CustomerResponseDTO>>({

@@ -38,6 +38,9 @@ public class CustomerRequestDTO {
     @Pattern(regexp = "^[0-9]{1,15}$", message = "Mobile number must contain only digits and cannot exceed 15 digits")
     @Size(max = 15, message = "Mobile number cannot exceed 15 digits")
     private String mobile;
+    
+    @Size(max = 10, message = "Branch Code cannot exceed 10 characters")
+    private String branchCode = "001"; // Default branch code
 
     @NotBlank(message = "Maker ID is mandatory")
     @Size(max = 20, message = "Maker ID cannot exceed 20 characters")

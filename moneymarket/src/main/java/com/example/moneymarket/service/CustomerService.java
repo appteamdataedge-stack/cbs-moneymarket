@@ -26,6 +26,7 @@ import java.time.LocalTime;
 public class CustomerService {
 
     private final CustMasterRepository custMasterRepository;
+    private final CustomerIdService customerIdService;
 
     /**
      * Create a new customer
@@ -43,8 +44,14 @@ public class CustomerService {
         // Validate customer type specific fields
         validateCustomerTypeFields(customerRequestDTO);
 
+        // Generate customer ID based on customer type
+        Integer custId = customerIdService.generateCustomerId(customerRequestDTO.getCustType());
+
         // Map DTO to entity
         CustMaster customer = mapToEntity(customerRequestDTO);
+        
+        // Set the generated customer ID
+        customer.setCustId(custId);
 
         // Set audit fields
         customer.setEntryDate(LocalDate.now());
@@ -54,8 +61,11 @@ public class CustomerService {
         CustMaster savedCustomer = custMasterRepository.save(customer);
         log.info("Customer created with ID: {}", savedCustomer.getCustId());
 
-        // Return the response
-        return mapToResponse(savedCustomer);
+        // Return the response with success message
+        CustomerResponseDTO response = mapToResponse(savedCustomer);
+        response.setMessage("Customer Id " + savedCustomer.getCustId() + " created");
+        
+        return response;
     }
 
     /**
@@ -131,6 +141,26 @@ public class CustomerService {
         // Map to response DTOs
         return customers.map(this::mapToResponse);
     }
+    
+    /**
+     * Search customers by search term
+     * 
+     * @param searchTerm The search term
+     * @param pageable The pagination information
+     * @return Page of customer responses matching the search term
+     */
+    public Page<CustomerResponseDTO> searchCustomers(String searchTerm, Pageable pageable) {
+        if (searchTerm == null || searchTerm.trim().isEmpty()) {
+            // If search term is empty, return all customers
+            return getAllCustomers(pageable);
+        }
+        
+        // Search customers by the search term
+        Page<CustMaster> customers = custMasterRepository.searchCustomers(searchTerm, pageable);
+        
+        // Map to response DTOs
+        return customers.map(this::mapToResponse);
+    }
 
     /**
      * Verify a customer
@@ -202,6 +232,7 @@ public class CustomerService {
                 .tradeName(dto.getTradeName())
                 .address1(dto.getAddress1())
                 .mobile(dto.getMobile())
+                .branchCode(dto.getBranchCode() != null ? dto.getBranchCode() : "001") // Default branch code
                 .makerId(dto.getMakerId())
                 .entryDate(LocalDate.now())
                 .entryTime(LocalTime.now())
@@ -224,6 +255,7 @@ public class CustomerService {
                 .tradeName(entity.getTradeName())
                 .address1(entity.getAddress1())
                 .mobile(entity.getMobile())
+                .branchCode(entity.getBranchCode() != null ? entity.getBranchCode() : "001") // Default branch code
                 .makerId(entity.getMakerId())
                 .entryDate(entity.getEntryDate())
                 .entryTime(entity.getEntryTime())

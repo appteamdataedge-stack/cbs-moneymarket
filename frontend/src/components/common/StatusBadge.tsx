@@ -1,5 +1,4 @@
 import { Chip, useTheme } from '@mui/material';
-import type { ChipProps } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
@@ -56,17 +55,25 @@ const StatusBadge = ({
     const getThemeColor = (type: StatusType) => {
       try {
         // Use default colors if theme palette doesn't have the color
-        if (!theme.palette[type] || !theme.palette[type].main) {
-          const defaultColors = {
-            success: '#4caf50',
-            warning: '#ff9800',
-            error: '#f44336',
-            info: '#2196f3',
-            default: '#9e9e9e'
-          };
-          return defaultColors[type] || defaultColors.default;
+        const defaultColors = {
+          success: '#4caf50',
+          warning: '#ff9800',
+          error: '#f44336',
+          info: '#2196f3',
+          default: '#9e9e9e'
+        };
+        
+        if (type === 'success' && theme.palette.success) {
+          return theme.palette.success.main;
+        } else if (type === 'error' && theme.palette.error) {
+          return theme.palette.error.main;
+        } else if (type === 'warning' && theme.palette.warning) {
+          return theme.palette.warning.main;
+        } else if (type === 'info' && theme.palette.info) {
+          return theme.palette.info.main;
         }
-        return theme.palette[type].main;
+        
+        return defaultColors[type] || defaultColors.default;
       } catch (e) {
         // Fallback colors if there's any error
         const fallbackColors = {

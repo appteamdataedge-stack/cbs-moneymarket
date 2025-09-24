@@ -13,7 +13,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -28,7 +32,27 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TransactionController.class)
+@ContextConfiguration(classes = {TransactionController.class, TransactionControllerTest.TestConfig.class})
 class TransactionControllerTest {
+    
+    @Configuration
+    static class TestConfig {
+        @Bean
+        @Primary
+        public TransactionValidator transactionValidator() {
+            return new TransactionValidator(null) {
+                @Override
+                public boolean supports(Class<?> clazz) {
+                    return true;
+                }
+                
+                @Override
+                public void validate(Object target, org.springframework.validation.Errors errors) {
+                    // No validation
+                }
+            };
+        }
+    }
 
     @Autowired
     private MockMvc mockMvc;
@@ -36,8 +60,8 @@ class TransactionControllerTest {
     @MockBean
     private TransactionService transactionService;
 
-    @MockBean
-    private TransactionValidator transactionValidator;
+    // Using @Primary bean from TestConfig instead of @MockBean
+    // private TransactionValidator transactionValidator;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -113,6 +137,8 @@ class TransactionControllerTest {
         // Arrange
         given(transactionService.createTransaction(any(TransactionRequestDTO.class)))
                 .willReturn(transactionResponse);
+        
+        // The validator is already mocked with a no-op implementation in TestConfig
 
         // Act & Assert
         mockMvc.perform(post("/api/transactions/entry")

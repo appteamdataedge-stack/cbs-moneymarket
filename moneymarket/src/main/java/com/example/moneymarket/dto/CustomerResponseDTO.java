@@ -23,6 +23,7 @@ public class CustomerResponseDTO {
     private String tradeName;
     private String address1;
     private String mobile;
+    private String branchCode;
     private String makerId;
     private LocalDate entryDate;
     private LocalTime entryTime;
@@ -30,4 +31,7 @@ public class CustomerResponseDTO {
     private LocalDate verificationDate;
     private LocalTime verificationTime;
     private boolean verified;
+    
+    // Message for UI display (e.g., "Customer ID xxxxxxxx created")
+    private String message;
 }

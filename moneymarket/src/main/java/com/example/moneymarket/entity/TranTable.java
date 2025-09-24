@@ -50,6 +50,12 @@ public class TranTable {
 
     @Column(name = "LCY_Amt", nullable = false, precision = 20, scale = 2)
     private BigDecimal lcyAmt;
+    
+    @Column(name = "Debit_Amount", precision = 20, scale = 2)
+    private BigDecimal debitAmount;
+    
+    @Column(name = "Credit_Amount", precision = 20, scale = 2)
+    private BigDecimal creditAmount;
 
     @Column(name = "Narration", length = 100)
     private String narration;

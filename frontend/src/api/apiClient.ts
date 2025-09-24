@@ -132,10 +132,11 @@ export const apiRequest = async <T>(
   try {
     const response: AxiosResponse<T> = await apiClient(config);
     return response.data;
-  } catch (error) {
+  } catch (error: unknown) {
     // Only retry on network errors or 5xx server errors
-    const isNetworkError = !error.response;
-    const isServerError = error.response && error.response.status >= 500;
+    const axiosError = error as AxiosError;
+    const isNetworkError = !axiosError.response;
+    const isServerError = axiosError.response && axiosError.response.status >= 500;
     
     if ((isNetworkError || isServerError) && retries > 0) {
       console.log(`Retrying API request (${retries} retries left)...`);

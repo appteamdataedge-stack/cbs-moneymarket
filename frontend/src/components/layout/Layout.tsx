@@ -1,4 +1,4 @@
-import { Box, Container, CssBaseline, ThemeProvider, Typography, createTheme, responsiveFontSizes } from '@mui/material';
+import { Box, CssBaseline, ThemeProvider, Typography, createTheme, responsiveFontSizes } from '@mui/material';
 import type { ReactNode } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';

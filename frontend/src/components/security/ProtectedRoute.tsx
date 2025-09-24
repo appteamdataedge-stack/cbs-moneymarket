@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Box, Typography, Button } from '@mui/material';
 import LockIcon from '@mui/icons-material/Lock';
@@ -12,7 +12,7 @@ interface ProtectedRouteProps {
  * Protected route component that checks authentication and authorization
  */
 const ProtectedRoute = ({ requiredPermission, requiredRole }: ProtectedRouteProps) => {
-  const { isLoggedIn, hasPermission, hasRole, logout } = useAuth();
+  const { hasPermission, hasRole, logout } = useAuth();
 
   // Check if user is logged in
   // Temporarily bypass authentication check for development
@@ -22,7 +22,7 @@ const ProtectedRoute = ({ requiredPermission, requiredRole }: ProtectedRouteProp
 
   // Check permissions if required
   // Temporarily bypass permission check for development
-  if (false && requiredPermission && !hasPermission(requiredPermission)) {
+  if (false && requiredPermission && !hasPermission(requiredPermission || '')) {
     return (
       <Box
         sx={{
@@ -56,7 +56,7 @@ const ProtectedRoute = ({ requiredPermission, requiredRole }: ProtectedRouteProp
 
   // Check role if required
   // Temporarily bypass role check for development
-  if (false && requiredRole && !hasRole(requiredRole)) {
+  if (false && requiredRole && !hasRole(requiredRole || '')) {
     return (
       <Box
         sx={{

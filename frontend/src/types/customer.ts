@@ -4,8 +4,9 @@
 
 // Enum for customer type
 export enum CustomerType {
-  INDIVIDUAL = 'INDIVIDUAL',
-  CORPORATE = 'CORPORATE'
+  INDIVIDUAL = 'Individual',
+  CORPORATE = 'Corporate',
+  BANK = 'Bank'
 }
 
 // Customer request DTO
@@ -17,6 +18,7 @@ export interface CustomerRequestDTO {
   tradeName?: string;
   address1?: string;
   mobile?: string;
+  branchCode?: string; // Default value "001" set in the backend
   makerId: string;
 }
 
@@ -37,6 +39,7 @@ export interface CustomerResponseDTO {
   verificationDate?: string; // LocalDate as ISO string
   verificationTime?: string; // LocalTime as ISO string
   verified: boolean;
+  message?: string; // Optional message from API
 }
 
 // Customer verification DTO

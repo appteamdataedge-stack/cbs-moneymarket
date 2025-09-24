@@ -35,6 +35,7 @@ export interface CustomerAccountResponseDTO {
   closeDate?: string; // LocalDate as ISO string
   makerId: string;
   interestRate?: number;
+  message?: string; // Optional message from API
 }
 
 // Office account request DTO

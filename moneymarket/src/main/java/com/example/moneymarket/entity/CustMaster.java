@@ -18,7 +18,6 @@ import java.time.LocalTime;
 public class CustMaster {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Cust_Id")
     private Integer custId;
 
@@ -43,6 +42,9 @@ public class CustMaster {
 
     @Column(name = "Mobile", length = 15)
     private String mobile;
+    
+    @Column(name = "Branch_Code", length = 10)
+    private String branchCode;
 
     @Column(name = "Maker_Id", nullable = false, length = 20)
     private String makerId;

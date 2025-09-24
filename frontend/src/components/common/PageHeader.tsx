@@ -38,10 +38,8 @@ const PageHeader = ({
     
     let currentPath = '';
     
-    paths.forEach((path, index) => {
+    paths.forEach((path) => {
       currentPath += `/${path}`;
-      const isLast = index === paths.length - 1;
-      
       // Format the path name to be more readable
       let name = path.charAt(0).toUpperCase() + path.slice(1);
       
@@ -54,8 +52,7 @@ const PageHeader = ({
       
       breadcrumbItems.push({
         name,
-        path: currentPath,
-        current: isLast
+        path: currentPath
       });
     });
     

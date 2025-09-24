@@ -3,6 +3,11 @@ import {
   Box,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   FormControl,
   FormHelperText,
   Grid,
@@ -12,7 +17,7 @@ import {
   TextField,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
@@ -26,6 +31,10 @@ const CustomerForm = () => {
   const isEdit = Boolean(id);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // State for success dialog
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [createdCustomerId, setCreatedCustomerId] = useState<string | null>(null);
 
   // Form setup with react-hook-form
   const { 
@@ -77,8 +86,14 @@ const CustomerForm = () => {
     mutationFn: createCustomer,
     onSuccess: (data: CustomerResponseDTO) => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
-      toast.success('Customer created successfully');
-      navigate(`/customers/${data.custId}`);
+      // Show dialog with customer ID instead of toast
+      if (data.message) {
+        setCreatedCustomerId(data.message);
+        setSuccessDialogOpen(true);
+      } else {
+        toast.success('Customer created successfully');
+        navigate(`/customers/${data.custId}`);
+      }
     },
     onError: (error: Error) => {
       toast.error(`Failed to create customer: ${error.message}`);
@@ -109,6 +124,12 @@ const CustomerForm = () => {
     }
   };
 
+  // Handle dialog close
+  const handleCloseSuccessDialog = () => {
+    setSuccessDialogOpen(false);
+    navigate(`/customers`);
+  };
+  
   return (
     <Box>
       <PageHeader
@@ -118,6 +139,26 @@ const CustomerForm = () => {
         startIcon={<ArrowBackIcon />}
       />
 
+      {/* Success Dialog */}
+      <Dialog
+        open={successDialogOpen}
+        onClose={handleCloseSuccessDialog}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">Customer Created</DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            {createdCustomerId}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseSuccessDialog} color="primary" autoFocus>
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {isEdit && isLoadingCustomer ? (
         <Box display="flex" justifyContent="center" my={4}>
           <CircularProgress />
@@ -126,6 +167,32 @@ const CustomerForm = () => {
         <form onSubmit={handleSubmit(onSubmit)}>
           <FormSection title="Customer Information">
             <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                {/* Customer ID field - disabled in create mode, visible in edit mode */}
+                {isEdit && (
+                  <TextField
+                    label="Primary Cust Id"
+                    value={customerData?.custId || ''}
+                    fullWidth
+                    disabled={true}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                  />
+                )}
+                {!isEdit && (
+                  <TextField
+                    label="Primary Cust Id"
+                    value="Will be generated"
+                    fullWidth
+                    disabled={true}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                  />
+                )}
+              </Grid>
+              
               <Grid item xs={12} md={6}>
                 <Controller
                   name="extCustId"
@@ -167,6 +234,8 @@ const CustomerForm = () => {
                       >
                         <MenuItem value={CustomerType.INDIVIDUAL}>Individual</MenuItem>
                         <MenuItem value={CustomerType.CORPORATE}>Corporate</MenuItem>
+                        <MenuItem value={CustomerType.BANK}>Bank</MenuItem>
+                        
                       </Select>
                       <FormHelperText>{errors.custType?.message}</FormHelperText>
                     </FormControl>
@@ -320,6 +389,18 @@ const CustomerForm = () => {
                       disabled={isLoading}
                     />
                   )}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Branch Code"
+                  value="001"
+                  fullWidth
+                  disabled={true}
+                  InputProps={{
+                    readOnly: true,
+                  }}
                 />
               </Grid>
             </Grid>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Button, Typography, Paper, CircularProgress, Alert, Divider } from '@mui/material';
+import { Box, Button, Typography, Paper, CircularProgress, Alert } from '@mui/material';
 import { getAllSubProducts } from '../api/subProductService';
 import { getAllCustomerAccounts } from '../api/customerAccountService';
 

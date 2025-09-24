@@ -1,5 +1,5 @@
 import { Add as AddIcon, Edit as EditIcon, Verified as VerifiedIcon } from '@mui/icons-material';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
@@ -26,11 +26,13 @@ const SubProductList = () => {
     queryKey: ['subProducts', { page, size: rowsPerPage, sort }],
     queryFn: () => getAllSubProducts(page, rowsPerPage, sort),
     retry: 3,
-    retryDelay: 1000,
-    onError: (err) => {
-      console.error('Error fetching subproducts:', err);
-    }
+    retryDelay: 1000
   });
+
+  // Handle error if needed
+  if (error) {
+    console.error('Error fetching subproducts:', error);
+  }
 
   // Handle sort
   const handleSort = (field: string, direction: 'asc' | 'desc') => {

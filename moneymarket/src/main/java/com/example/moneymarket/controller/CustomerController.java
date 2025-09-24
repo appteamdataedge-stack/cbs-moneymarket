@@ -94,11 +94,23 @@ public class CustomerController {
      * Get all customers with pagination
      * 
      * @param pageable The pagination information
+     * @param search The optional search term
      * @return Page of customers
      */
     @GetMapping
-    public ResponseEntity<Page<CustomerResponseDTO>> getAllCustomers(Pageable pageable) {
-        Page<CustomerResponseDTO> customers = customerService.getAllCustomers(pageable);
+    public ResponseEntity<Page<CustomerResponseDTO>> getAllCustomers(
+            @RequestParam(required = false) String search,
+            Pageable pageable) {
+        
+        Page<CustomerResponseDTO> customers;
+        if (search != null && !search.trim().isEmpty()) {
+            // If search parameter is provided, use search functionality
+            customers = customerService.searchCustomers(search, pageable);
+        } else {
+            // Otherwise, get all customers
+            customers = customerService.getAllCustomers(pageable);
+        }
+        
         return ResponseEntity.ok(customers);
     }
 

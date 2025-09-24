@@ -56,9 +56,9 @@ public class CustomerAccountService {
             throw new BusinessException("Sub-Product is not active");
         }
 
-        // Generate account number
+        // Generate customer account number using the new format
+        String accountNo = accountNumberService.generateCustomerAccountNumber(customer, subProduct);
         String glNum = subProduct.getCumGLNum();
-        String accountNo = accountNumberService.generateAccountNumber(glNum);
 
         // Map DTO to entity
         CustAcctMaster account = mapToEntity(accountRequestDTO, customer, subProduct, accountNo, glNum);
@@ -79,8 +79,11 @@ public class CustomerAccountService {
 
         log.info("Customer Account created with account number: {}", savedAccount.getAccountNo());
 
-        // Return the response
-        return mapToResponse(savedAccount, accountBalance);
+        // Return the response with success message
+        CustomerAccountResponseDTO response = mapToResponse(savedAccount, accountBalance);
+        response.setMessage("Account Number " + savedAccount.getAccountNo() + " created");
+        
+        return response;
     }
 
     /**
