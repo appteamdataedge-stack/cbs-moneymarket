@@ -1,0 +1,373 @@
+import { ArrowBack as ArrowBackIcon, Save as SaveIcon } from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  FormControl,
+  FormHelperText,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Select,
+  TextField
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'react-toastify';
+import { getAllProducts } from '../../api/productService';
+import { createSubProduct, getSubProductById, updateSubProduct } from '../../api/subProductService';
+import { FormSection, PageHeader } from '../../components/common';
+import type { SubProductRequestDTO } from '../../types';
+import { SubProductStatus } from '../../types';
+
+const SubProductForm = () => {
+  const { id } = useParams<{ id: string }>();
+  const isEdit = Boolean(id);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  // Form setup with react-hook-form
+  const { 
+    control, 
+    handleSubmit, 
+    setValue,
+    formState: { errors }
+  } = useForm<SubProductRequestDTO>({
+    defaultValues: {
+      subProductCode: '',
+      subProductName: '',
+      productId: 0,
+      interestRate: 0,
+      term: undefined,
+      termCode: undefined,
+      cumGlNum: '',
+      interestGlNum: '',
+      status: SubProductStatus.ACTIVE,
+      makerId: 'FRONTEND_USER', // Default maker ID
+    }
+  });
+
+  // Get subproduct data if editing
+  const { data: subProductData, isLoading: isLoadingSubProduct } = useQuery({
+    queryKey: ['subProduct', id],
+    queryFn: () => getSubProductById(Number(id)),
+    enabled: isEdit,
+  });
+
+  // Get products for dropdown
+  const { data: productsData, isLoading: isLoadingProducts } = useQuery({
+    queryKey: ['products', { page: 0, size: 100 }], // Get all products for dropdown
+    queryFn: () => getAllProducts(0, 100),
+  });
+
+  // Set form values when subproduct data is loaded
+  useEffect(() => {
+    if (subProductData && isEdit) {
+      // Set form values from loaded subproduct data
+      setValue('subProductCode', subProductData.subProductCode);
+      setValue('subProductName', subProductData.subProductName);
+      setValue('productId', subProductData.productId);
+      setValue('interestRate', subProductData.interestRate);
+      setValue('term', subProductData.term);
+      setValue('termCode', subProductData.termCode);
+      setValue('cumGlNum', subProductData.cumGlNum);
+      setValue('interestGlNum', subProductData.interestGlNum);
+      setValue('status', subProductData.status);
+      setValue('makerId', 'FRONTEND_USER'); // Use default for edits too
+    }
+  }, [subProductData, isEdit, setValue]);
+
+  // Mutations for create and update
+  const createMutation = useMutation({
+    mutationFn: createSubProduct,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['subProducts'] });
+      toast.success('SubProduct created successfully');
+      navigate(`/subproducts/${data.subProductId}`);
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to create subproduct: ${error.message}`);
+    }
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: (data: SubProductRequestDTO) => updateSubProduct(Number(id), data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subProducts'] });
+      queryClient.invalidateQueries({ queryKey: ['subProduct', id] });
+      toast.success('SubProduct updated successfully');
+      navigate('/subproducts');
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to update subproduct: ${error.message}`);
+    }
+  });
+
+  const isLoading = createMutation.isPending || updateMutation.isPending || isLoadingProducts;
+  const isDisabled = isLoading || (isEdit && subProductData?.verified);
+
+  // Submit handler
+  const onSubmit = (data: SubProductRequestDTO) => {
+    if (isEdit) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
+  };
+
+  return (
+    <Box>
+      <PageHeader
+        title={isEdit ? 'Edit SubProduct' : 'Add SubProduct'}
+        buttonText="Back to List"
+        buttonLink="/subproducts"
+        startIcon={<ArrowBackIcon />}
+      />
+
+      {isEdit && isLoadingSubProduct ? (
+        <Box display="flex" justifyContent="center" my={4}>
+          <CircularProgress />
+        </Box>
+      ) : (
+        <form onSubmit={handleSubmit(onSubmit)}>
+          <FormSection title="SubProduct Information">
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="subProductCode"
+                  control={control}
+                  rules={{ 
+                    required: 'SubProduct Code is mandatory'
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="SubProduct Code"
+                      fullWidth
+                      required
+                      error={!!errors.subProductCode}
+                      helperText={errors.subProductCode?.message}
+                      disabled={isDisabled}
+                    />
+                  )}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="subProductName"
+                  control={control}
+                  rules={{ required: 'SubProduct Name is mandatory' }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="SubProduct Name"
+                      fullWidth
+                      required
+                      error={!!errors.subProductName}
+                      helperText={errors.subProductName?.message}
+                      disabled={isDisabled}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="productId"
+                  control={control}
+                  rules={{ required: 'Product is mandatory' }}
+                  render={({ field }) => (
+                    <FormControl fullWidth error={!!errors.productId} disabled={isDisabled}>
+                      <InputLabel id="product-label">Product</InputLabel>
+                      <Select
+                        {...field}
+                        labelId="product-label"
+                        label="Product"
+                      >
+                        {productsData?.content.map((product) => (
+                          <MenuItem key={product.productId} value={product.productId}>
+                            {product.productName} ({product.productCode})
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <FormHelperText>{errors.productId?.message}</FormHelperText>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="interestRate"
+                  control={control}
+                  rules={{ 
+                    required: 'Interest Rate is mandatory',
+                    min: {
+                      value: 0,
+                      message: 'Interest Rate must be positive'
+                    }
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Interest Rate (%)"
+                      type="number"
+                      inputProps={{ step: 0.01 }}
+                      fullWidth
+                      required
+                      error={!!errors.interestRate}
+                      helperText={errors.interestRate?.message}
+                      disabled={isDisabled}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="term"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Term (days/months)"
+                      type="number"
+                      fullWidth
+                      error={!!errors.term}
+                      helperText={errors.term?.message}
+                      disabled={isDisabled}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="termCode"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Term Code (D/M/Y)"
+                      fullWidth
+                      error={!!errors.termCode}
+                      helperText={errors.termCode?.message}
+                      disabled={isDisabled}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="cumGlNum"
+                  control={control}
+                  rules={{ required: 'Cumulative GL Number is mandatory' }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Cumulative GL Number"
+                      fullWidth
+                      required
+                      error={!!errors.cumGlNum}
+                      helperText={errors.cumGlNum?.message}
+                      disabled={isDisabled}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="interestGlNum"
+                  control={control}
+                  rules={{ required: 'Interest GL Number is mandatory' }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Interest GL Number"
+                      fullWidth
+                      required
+                      error={!!errors.interestGlNum}
+                      helperText={errors.interestGlNum?.message}
+                      disabled={isDisabled}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="status"
+                  control={control}
+                  rules={{ required: 'Status is mandatory' }}
+                  render={({ field }) => (
+                    <FormControl fullWidth error={!!errors.status}>
+                      <InputLabel id="status-label">Status</InputLabel>
+                      <Select
+                        {...field}
+                        labelId="status-label"
+                        label="Status"
+                        disabled={isDisabled}
+                      >
+                        <MenuItem value={SubProductStatus.ACTIVE}>Active</MenuItem>
+                        <MenuItem value={SubProductStatus.INACTIVE}>Inactive</MenuItem>
+                        <MenuItem value={SubProductStatus.DEACTIVE}>Deactive</MenuItem>
+                      </Select>
+                      <FormHelperText>{errors.status?.message}</FormHelperText>
+                    </FormControl>
+                  )}
+                />
+              </Grid>
+              
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="makerId"
+                  control={control}
+                  rules={{
+                    required: 'Maker ID is mandatory'
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Maker ID"
+                      fullWidth
+                      required
+                      error={!!errors.makerId}
+                      helperText={errors.makerId?.message}
+                      disabled={isLoading}
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+          </FormSection>
+
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+            <Button
+              component={RouterLink}
+              to="/subproducts"
+              variant="outlined"
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isDisabled}
+              startIcon={isLoading ? <CircularProgress size={20} /> : <SaveIcon />}
+            >
+              {isEdit ? 'Update' : 'Create'} SubProduct
+            </Button>
+          </Box>
+        </form>
+      )}
+    </Box>
+  );
+};
+
+export default SubProductForm;
