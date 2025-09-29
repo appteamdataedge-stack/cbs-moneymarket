@@ -1,7 +1,7 @@
 /**
  * SubProduct API service
  */
-import type { CustomerVerificationDTO, Page, SubProductRequestDTO, SubProductResponseDTO } from '../types';
+import type { CustomerVerificationDTO, Page, SubProductRequestDTO, SubProductResponseDTO, GLSetupResponseDTO } from '../types';
 import { apiRequest } from './apiClient';
 
 const SUBPRODUCTS_ENDPOINT = '/subproducts';
@@ -69,5 +69,25 @@ export const verifySubProduct = async (id: number, verification: CustomerVerific
     method: 'POST',
     url: `${SUBPRODUCTS_ENDPOINT}/${id}/verify`,
     data: verification,
+  });
+};
+
+/**
+ * Get Layer 4 GL options for sub-product dropdown
+ */
+export const getSubProductGLOptions = async (): Promise<GLSetupResponseDTO[]> => {
+  return apiRequest<GLSetupResponseDTO[]>({
+    method: 'GET',
+    url: `${SUBPRODUCTS_ENDPOINT}/gl-options`,
+  });
+};
+
+/**
+ * Get Layer 4 GL options filtered by parent GL number
+ */
+export const getSubProductGLOptionsByParent = async (parentGlNum: string): Promise<GLSetupResponseDTO[]> => {
+  return apiRequest<GLSetupResponseDTO[]>({
+    method: 'GET',
+    url: `${SUBPRODUCTS_ENDPOINT}/gl-options/${parentGlNum}`,
   });
 };

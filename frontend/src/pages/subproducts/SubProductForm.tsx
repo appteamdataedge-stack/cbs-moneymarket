@@ -17,7 +17,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getAllProducts } from '../../api/productService';
-import { createSubProduct, getSubProductById, updateSubProduct } from '../../api/subProductService';
+import { createSubProduct, getSubProductById, updateSubProduct, getSubProductGLOptions, getSubProductGLOptionsByParent } from '../../api/subProductService';
 import { FormSection, PageHeader } from '../../components/common';
 import type { SubProductRequestDTO } from '../../types';
 import { SubProductStatus } from '../../types';
@@ -33,6 +33,7 @@ const SubProductForm = () => {
     control, 
     handleSubmit, 
     setValue,
+    watch,
     formState: { errors }
   } = useForm<SubProductRequestDTO>({
     defaultValues: {
@@ -49,6 +50,9 @@ const SubProductForm = () => {
     }
   });
 
+  // Watch productId to filter GL options
+  const selectedProductId = watch('productId');
+
   // Get subproduct data if editing
   const { data: subProductData, isLoading: isLoadingSubProduct } = useQuery({
     queryKey: ['subProduct', id],
@@ -60,6 +64,22 @@ const SubProductForm = () => {
   const { data: productsData, isLoading: isLoadingProducts } = useQuery({
     queryKey: ['products', { page: 0, size: 100 }], // Get all products for dropdown
     queryFn: () => getAllProducts(0, 100),
+  });
+
+  // Get selected product to find its GL number
+  const selectedProduct = productsData?.content?.find(p => p.productId === selectedProductId);
+
+  // Get Layer 4 GL options for sub-product dropdown
+  const { data: glSetups, isLoading: isLoadingGLSetups } = useQuery({
+    queryKey: ['subproduct-gl-options'],
+    queryFn: () => getSubProductGLOptions(),
+  });
+
+  // Get Layer 4 GL options filtered by parent GL number
+  const { data: filteredGLSetups, isLoading: isLoadingFilteredGLSetups } = useQuery({
+    queryKey: ['subproduct-gl-options', selectedProduct?.cumGLNum],
+    queryFn: () => getSubProductGLOptionsByParent(selectedProduct?.cumGLNum || ''),
+    enabled: !!selectedProduct?.cumGLNum,
   });
 
   // Set form values when subproduct data is loaded
@@ -105,8 +125,16 @@ const SubProductForm = () => {
     }
   });
 
-  const isLoading = createMutation.isPending || updateMutation.isPending || isLoadingProducts;
+  const isLoading = createMutation.isPending || updateMutation.isPending || isLoadingProducts || isLoadingGLSetups || isLoadingFilteredGLSetups;
   const isDisabled = isLoading || (isEdit && subProductData?.verified);
+
+  // Clear GL fields when product changes
+  useEffect(() => {
+    if (selectedProductId && !isEdit) {
+      setValue('cumGlNum', '');
+      setValue('interestGlNum', '');
+    }
+  }, [selectedProductId, isEdit, setValue]);
 
   // Submit handler
   const onSubmit = (data: SubProductRequestDTO) => {
@@ -267,15 +295,25 @@ const SubProductForm = () => {
                   control={control}
                   rules={{ required: 'Cumulative GL Number is mandatory' }}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Cumulative GL Number"
-                      fullWidth
-                      required
-                      error={!!errors.cumGlNum}
-                      helperText={errors.cumGlNum?.message}
-                      disabled={isDisabled}
-                    />
+                    <FormControl fullWidth error={!!errors.cumGlNum}>
+                      <InputLabel id="cum-gl-number-label">Cumulative GL Number</InputLabel>
+                      <Select
+                        {...field}
+                        labelId="cum-gl-number-label"
+                        label="Cumulative GL Number"
+                        disabled={isDisabled || !selectedProduct?.cumGLNum}
+                      >
+                        {(filteredGLSetups || []).map((glSetup) => (
+                          <MenuItem key={glSetup.glNum} value={glSetup.glNum}>
+                            {glSetup.glName} - {glSetup.glNum}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <FormHelperText>
+                        {errors.cumGlNum?.message || 
+                         (!selectedProduct?.cumGLNum ? 'Please select a product first' : '')}
+                      </FormHelperText>
+                    </FormControl>
                   )}
                 />
               </Grid>
@@ -286,15 +324,25 @@ const SubProductForm = () => {
                   control={control}
                   rules={{ required: 'Interest GL Number is mandatory' }}
                   render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Interest GL Number"
-                      fullWidth
-                      required
-                      error={!!errors.interestGlNum}
-                      helperText={errors.interestGlNum?.message}
-                      disabled={isDisabled}
-                    />
+                    <FormControl fullWidth error={!!errors.interestGlNum}>
+                      <InputLabel id="interest-gl-number-label">Interest GL Number</InputLabel>
+                      <Select
+                        {...field}
+                        labelId="interest-gl-number-label"
+                        label="Interest GL Number"
+                        disabled={isDisabled || !selectedProduct?.cumGLNum}
+                      >
+                        {(filteredGLSetups || []).map((glSetup) => (
+                          <MenuItem key={glSetup.glNum} value={glSetup.glNum}>
+                            {glSetup.glName} - {glSetup.glNum}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <FormHelperText>
+                        {errors.interestGlNum?.message || 
+                         (!selectedProduct?.cumGLNum ? 'Please select a product first' : '')}
+                      </FormHelperText>
+                    </FormControl>
                   )}
                 />
               </Grid>

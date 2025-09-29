@@ -3,7 +3,12 @@ import {
   Box,
   Button,
   CircularProgress,
+  FormControl,
+  FormHelperText,
   Grid,
+  InputLabel,
+  MenuItem,
+  Select,
   TextField
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -11,7 +16,7 @@ import { useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Link as RouterLink, useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { createProduct, getProductById, updateProduct } from '../../api/productService';
+import { createProduct, getProductById, updateProduct, getProductGLOptions } from '../../api/productService';
 import { FormSection, PageHeader } from '../../components/common';
 import type { ProductRequestDTO } from '../../types';
 
@@ -32,6 +37,7 @@ const ProductForm = () => {
       productCode: '',
       productName: '',
       productType: '',
+      cumGLNum: '', // GL Number field
       makerId: 'FRONTEND_USER', // Default maker ID
     }
   });
@@ -43,6 +49,12 @@ const ProductForm = () => {
     enabled: isEdit,
   });
 
+  // Get GL setups for layer 3
+  const { data: glSetups, isLoading: isLoadingGLSetups } = useQuery({
+    queryKey: ['product-gl-options'],
+    queryFn: () => getProductGLOptions(),
+  });
+
   // Set form values when product data is loaded
   useEffect(() => {
     if (productData && isEdit) {
@@ -50,6 +62,7 @@ const ProductForm = () => {
       setValue('productCode', productData.productCode);
       setValue('productName', productData.productName);
       setValue('productType', productData.productType);
+      setValue('cumGLNum', productData.cumGLNum);
       setValue('makerId', 'FRONTEND_USER'); // Use default for edits too
     }
   }, [productData, isEdit, setValue]);
@@ -144,6 +157,32 @@ const ProductForm = () => {
                       helperText={errors.productType?.message}
                       disabled={isLoading || (isEdit && productData?.verified)}
                     />
+                  )}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Controller
+                  name="cumGLNum"
+                  control={control}
+                  rules={{ required: 'GL Number is mandatory' }}
+                  render={({ field }) => (
+                    <FormControl fullWidth error={!!errors.cumGLNum}>
+                      <InputLabel id="gl-number-label">GL Number</InputLabel>
+                      <Select
+                        {...field}
+                        labelId="gl-number-label"
+                        label="GL Number"
+                        disabled={isLoading || isLoadingGLSetups || (isEdit && productData?.verified)}
+                      >
+                        {glSetups?.map((glSetup) => (
+                          <MenuItem key={glSetup.glNum} value={glSetup.glNum}>
+                            {glSetup.glName} - {glSetup.glNum}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <FormHelperText>{errors.cumGLNum?.message}</FormHelperText>
+                    </FormControl>
                   )}
                 />
               </Grid>

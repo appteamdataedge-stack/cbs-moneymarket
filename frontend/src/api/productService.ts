@@ -1,10 +1,11 @@
 /**
  * Product API service
  */
-import type { CustomerVerificationDTO, Page, ProductRequestDTO, ProductResponseDTO } from '../types';
+import type { CustomerVerificationDTO, Page, ProductRequestDTO, ProductResponseDTO, GLSetupResponseDTO, GLProductDTO } from '../types';
 import { apiRequest } from './apiClient';
 
 const PRODUCTS_ENDPOINT = '/products';
+const SUBPRODUCTS_ENDPOINT = '/subproducts';
 
 /**
  * Get all products with pagination
@@ -61,5 +62,45 @@ export const verifyProduct = async (id: number, verification: CustomerVerificati
     method: 'POST',
     url: `${PRODUCTS_ENDPOINT}/${id}/verify`,
     data: verification,
+  });
+};
+
+/**
+ * Get Layer 3 GL options for product dropdown
+ */
+export const getProductGLOptions = async (): Promise<GLSetupResponseDTO[]> => {
+  return apiRequest<GLSetupResponseDTO[]>({
+    method: 'GET',
+    url: `${PRODUCTS_ENDPOINT}/gl-options`,
+  });
+};
+
+/**
+ * Get all products (Layer 3 GL entries) for dropdown
+ */
+export const getProducts = async (): Promise<GLProductDTO[]> => {
+  return apiRequest<GLProductDTO[]>({
+    method: 'GET',
+    url: PRODUCTS_ENDPOINT,
+  });
+};
+
+/**
+ * Get all subproducts (Layer 4 GL entries) for dropdown
+ */
+export const getSubProducts = async (): Promise<GLProductDTO[]> => {
+  return apiRequest<GLProductDTO[]>({
+    method: 'GET',
+    url: SUBPRODUCTS_ENDPOINT,
+  });
+};
+
+/**
+ * Get subproducts filtered by parent GL number
+ */
+export const getSubProductsByParent = async (parentGlNum: string): Promise<GLProductDTO[]> => {
+  return apiRequest<GLProductDTO[]>({
+    method: 'GET',
+    url: `${SUBPRODUCTS_ENDPOINT}/gl-options/${parentGlNum}`,
   });
 };
