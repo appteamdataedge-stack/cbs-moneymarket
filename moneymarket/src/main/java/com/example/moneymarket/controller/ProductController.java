@@ -3,7 +3,9 @@ package com.example.moneymarket.controller;
 import com.example.moneymarket.dto.CustomerVerificationDTO;
 import com.example.moneymarket.dto.ProductRequestDTO;
 import com.example.moneymarket.dto.ProductResponseDTO;
+import com.example.moneymarket.dto.GLSetupResponseDTO;
 import com.example.moneymarket.service.ProductService;
+import com.example.moneymarket.service.GLSetupService;
 import com.example.moneymarket.validation.ProductValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST controller for product operations
  */
@@ -25,6 +29,7 @@ public class ProductController {
 
     private final ProductService productService;
     private final ProductValidator productValidator;
+    private final GLSetupService glSetupService;
 
     /**
      * Initialize validator for product request
@@ -100,6 +105,17 @@ public class ProductController {
     public ResponseEntity<Page<ProductResponseDTO>> getAllProducts(Pageable pageable) {
         Page<ProductResponseDTO> products = productService.getAllProducts(pageable);
         return ResponseEntity.ok(products);
+    }
+
+    /**
+     * Get all Layer 3 GL entries for product dropdown
+     * 
+     * @return List of Layer 3 GL entries
+     */
+    @GetMapping("/gl-options")
+    public ResponseEntity<List<GLSetupResponseDTO>> getProductGLOptions() {
+        List<GLSetupResponseDTO> glOptions = glSetupService.getGLSetupsByLayerId(3);
+        return ResponseEntity.ok(glOptions);
     }
 
     /**

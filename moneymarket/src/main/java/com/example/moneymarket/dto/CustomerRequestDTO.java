@@ -40,6 +40,7 @@ public class CustomerRequestDTO {
     private String mobile;
     
     @Size(max = 10, message = "Branch Code cannot exceed 10 characters")
+    @Builder.Default
     private String branchCode = "001"; // Default branch code
 
     @NotBlank(message = "Maker ID is mandatory")

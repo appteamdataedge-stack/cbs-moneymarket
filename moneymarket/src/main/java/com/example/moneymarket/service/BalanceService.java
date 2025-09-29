@@ -36,7 +36,7 @@ public class BalanceService {
      * @return The updated balance
      */
     @Transactional(isolation = Isolation.REPEATABLE_READ)
-    @Retryable(value = {Exception.class}, maxAttempts = 3)
+    @Retryable(retryFor = {Exception.class}, maxAttempts = 3)
     public BigDecimal updateAccountBalance(String accountNo, DrCrFlag drCrFlag, BigDecimal amount) {
         // Get account balance with lock
         AcctBal balance = acctBalRepository.findByAccountNoWithLock(accountNo)
@@ -75,7 +75,7 @@ public class BalanceService {
      * @return The updated balance
      */
     @Transactional(isolation = Isolation.REPEATABLE_READ)
-    @Retryable(value = {Exception.class}, maxAttempts = 3)
+    @Retryable(retryFor = {Exception.class}, maxAttempts = 3)
     public BigDecimal updateGLBalance(String glNum, DrCrFlag drCrFlag, BigDecimal amount) {
         // Get GL balance with lock
         GLBalance balance = glBalanceRepository.findByGlNumWithLock(glNum)

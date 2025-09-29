@@ -3,7 +3,9 @@ package com.example.moneymarket.controller;
 import com.example.moneymarket.dto.CustomerVerificationDTO;
 import com.example.moneymarket.dto.SubProductRequestDTO;
 import com.example.moneymarket.dto.SubProductResponseDTO;
+import com.example.moneymarket.dto.GLSetupResponseDTO;
 import com.example.moneymarket.service.SubProductService;
+import com.example.moneymarket.service.GLSetupService;
 import com.example.moneymarket.validation.SubProductValidator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +17,8 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 /**
  * REST controller for sub-product operations
  */
@@ -25,6 +29,7 @@ public class SubProductController {
 
     private final SubProductService subProductService;
     private final SubProductValidator subProductValidator;
+    private final GLSetupService glSetupService;
 
     /**
      * Initialize validator for sub-product request
@@ -100,6 +105,30 @@ public class SubProductController {
     public ResponseEntity<Page<SubProductResponseDTO>> getAllSubProducts(Pageable pageable) {
         Page<SubProductResponseDTO> subProducts = subProductService.getAllSubProducts(pageable);
         return ResponseEntity.ok(subProducts);
+    }
+
+    /**
+     * Get all Layer 4 GL entries for sub-product dropdown
+     * 
+     * @return List of Layer 4 GL entries
+     */
+    @GetMapping("/gl-options")
+    public ResponseEntity<List<GLSetupResponseDTO>> getSubProductGLOptions() {
+        List<GLSetupResponseDTO> glOptions = glSetupService.getGLSetupsByLayerId(4);
+        return ResponseEntity.ok(glOptions);
+    }
+
+    /**
+     * Get Layer 4 GL entries filtered by parent GL number
+     * 
+     * @param parentGlNum The parent GL number
+     * @return List of Layer 4 GL entries filtered by parent
+     */
+    @GetMapping("/gl-options/{parentGlNum}")
+    public ResponseEntity<List<GLSetupResponseDTO>> getSubProductGLOptionsByParent(
+            @PathVariable String parentGlNum) {
+        List<GLSetupResponseDTO> glOptions = glSetupService.getGLSetupsByLayerIdAndParent(4, parentGlNum);
+        return ResponseEntity.ok(glOptions);
     }
 
     /**

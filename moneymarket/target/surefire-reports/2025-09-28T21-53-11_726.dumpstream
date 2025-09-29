@@ -1,0 +1,5 @@
+# Created at 2025-09-28T21:53:20.451
+Boot Manifest-JAR contains absolute paths in classpath 'G:\Money-market-PTTP\moneymarket\target\test-classes'
+Hint: <argLine>-Djdk.net.URLClassPath.disableClassPathURLCheck=true</argLine>
+'other' has different root
+
